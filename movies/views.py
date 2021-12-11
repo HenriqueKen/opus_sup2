@@ -6,6 +6,8 @@ from django.shortcuts import render, get_object_or_404
 from .models import Movie, Review, List, Provider
 from .forms import MovieForm, ReviewForm, ProviderForm
 from django.views import generic
+from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 
 def detail_movie(request, movie_id):
     movie = get_object_or_404(Movie, pk=movie_id)
@@ -39,12 +41,12 @@ class ListListView(generic.ListView):
     model = List
     template_name = 'movies/lists.html'
 
-
-class ListCreateView(generic.CreateView):
+class ListCreateView(LoginRequiredMixin, PermissionRequiredMixin, generic.CreateView):
     model = List
     template_name = 'movies/create_list.html'
     fields = ['name', 'author', 'movies']
     success_url = reverse_lazy('movies:lists')
+    permission_required = 'movies.add_list'
 
 def search_movies(request):
     context = {}
@@ -73,6 +75,8 @@ def search_movies(request):
 #     context = {'movie_form': movie_form, 'provider_form': provider_form}
 #     return render(request, 'movies/create.html', context)
 
+@login_required
+@permission_required('movies.add_movie')
 def create_movie(request):
     if request.method == 'POST':
         movie_form = MovieForm(request.POST)
@@ -92,6 +96,7 @@ def create_movie(request):
     context = {'movie_form': movie_form, 'provider_form': provider_form}
     return render(request, 'movies/create.html', context)
 
+@login_required
 def update_movie(request, movie_id):
     movie = get_object_or_404(Movie, pk=movie_id)
 
@@ -115,7 +120,7 @@ def update_movie(request, movie_id):
     context = {'movie': movie, 'form': form}
     return render(request, 'movies/update.html', context)
 
-
+@login_required
 def delete_movie(request, movie_id):
     movie = get_object_or_404(Movie, pk=movie_id)
 
@@ -126,6 +131,7 @@ def delete_movie(request, movie_id):
     context = {'movie': movie}
     return render(request, 'movies/delete.html', context)
 
+@login_required
 def create_review(request, movie_id):
     movie = get_object_or_404(Movie, pk=movie_id)
     if request.method == 'POST':
